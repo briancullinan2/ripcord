@@ -51,7 +51,7 @@ if(cluster.isPrimary)
 	}
 
 	const params = {
-		port: 8040,
+		port: 8400,
 		host: "localhost",
 		root: "./",
 		open: cluster.worker.id === 1,
@@ -70,5 +70,5 @@ if(cluster.isPrimary)
 	};
 
 	liveServer.start(params);
-	console.log(`[Worker ${process.pid}] Static file server ready on http://localhost:8040`);
+	console.log(`[Worker ${process.pid}] Static file server ready on http://localhost:8400`);
 }

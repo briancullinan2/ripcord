@@ -65,7 +65,7 @@ export const IMPORT_SETTINGS: Record<string, Record<string, SettingConfig>> = {
         },
         "environmentRepository": {
             "key": "environment_repository",
-			"default": "briancullinan2/mediaserver-ts",
+            "default": "briancullinan2/ripcord",
             "description": "Repository for this workspace, the entire IDE, code editor and engine runner, for editing the environment inside the workspace."
         },
         "environmentVersion": {
@@ -76,7 +76,7 @@ export const IMPORT_SETTINGS: Record<string, Record<string, SettingConfig>> = {
     "core": {
         "workspaceDefault": {
             "key": "workspace_default",
-			"default": "fileview",
+            "default": "status",
             "description": "Specifies the default active panel or system layout view presented to users upon launching the application interface."
         },
         "environmentVersion": {
@@ -128,30 +128,6 @@ export const IMPORT_SETTINGS: Record<string, Record<string, SettingConfig>> = {
             "description": "Defines the keyboard mapping protocol (e.g., standard, Vim, or Emacs configurations) utilized inside the script editor workspace."
         }
     },
-	"filelist": {
-		"googleDriveKey": {
-			"key": "google_key",
-			"default": "AIzaSyAsZR_uPzhdnkNktP8CGKbooWndEUYaq9I",
-			"type": "json",
-			"description": "google drive API key."
-		},
-		"googleDriveList": {
-			"key": "google_drives",
-			"default": [
-				"gdrive://1iZXcde4zeQmFJoCedo70wu0ouZ1QF0Se"
-			],
-			"type": "json",
-			"description": "json record of folder ids and folder names."
-		},
-		"httpIndexList": {
-			"key": "http_indexes",
-			"default": [
-				"${window.location.origin}/clipart"
-			],
-			"type": "json",
-			"description": "json record of index URLs and display names."
-		}
-	},
     "terminal": {
         "commandHistory": {
             "key": "history",

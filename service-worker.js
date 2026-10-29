@@ -868,7 +868,7 @@ async function lookupLocalVersion(source)
 			if(!newestVersionFile || (newestVersionFile?.timestamp && result.versionFile.timestamp > newestVersionFile.timestamp))
 			{
 				newestVersionFile = result.versionFile;
-				chosenRepo = result.repo ?? serviceSelf.DB_NAME ?? 'bjcullinan2/mediaserver-ts';
+				chosenRepo = result.repo ?? serviceSelf.DB_NAME ?? 'briancullinan2/ripcord';
 			}
 		}
 
