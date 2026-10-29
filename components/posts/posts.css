@@ -1,0 +1,417 @@
+.lm-BuddyListWidget {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	width: 100%;
+	background-color: #1e1e1e;
+	color: #cccccc;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+	font-size: 13px;
+	user-select: none;
+	box-sizing: border-box;
+}
+
+.bl-header {
+	padding: 10px 14px;
+	background-color: #252526;
+	border-bottom: 1px solid #333333;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.bl-title-text {
+	font-weight: 600;
+	font-size: 14px;
+	color: #ffffff;
+}
+
+.bl-subtitle {
+	font-size: 11px;
+	color: #858585;
+}
+
+.bl-content-container {
+	position: relative;
+	flex: 1;
+	overflow-y: auto;
+}
+
+.bl-dropzone-overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(30, 30, 30, 0.9);
+	border: 2px dashed #666666;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	z-index: 10;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.15s ease-in-out;
+}
+
+.bl-dropzone-overlay.visible {
+	opacity: 1;
+	border: 2px dashed #666666;
+}
+
+.bl-dropzone-overlay.active {
+	opacity: 1;
+	border: 2px dashed #0e639c;
+	pointer-events: auto;
+}
+
+.bl-dropzone-overlay i {
+	font-size: 36px;
+	color: #0e639c;
+	margin-bottom: 8px;
+}
+
+.bl-dropzone-overlay p {
+	margin: 0;
+	color: #cccccc;
+}
+
+.bl-dropzone-overlay code {
+	background-color: #2d2d2d;
+	padding: 2px 6px;
+	border-radius: 3px;
+	color: #569cd6;
+}
+
+.bl-tree-view {
+	padding: 6px 0;
+}
+
+.bl-group-node {
+	display: flex;
+	flex-direction: column;
+}
+
+.bl-group-header {
+	display: flex;
+	align-items: center;
+	padding: 4px 8px;
+	cursor: pointer;
+	border-radius: 3px;
+	margin: 0 4px;
+}
+
+.bl-group-header:hover {
+	background-color: #2a2d2e;
+}
+
+.bl-toggle-icon {
+	font-size: 16px;
+	margin-right: 4px;
+	color: #858585;
+}
+
+.bl-folder-icon {
+	font-size: 15px;
+	margin-right: 6px;
+	color: #c5c5c5;
+}
+
+.bl-group-title {
+	font-weight: 500;
+	color: #e1e1e1;
+}
+
+.bl-group-count {
+	font-size: 11px;
+	color: #717171;
+	margin-left: 6px;
+}
+
+.bl-group-children {
+	padding-left: 16px;
+	display: none;
+}
+
+.bl-group-node.expanded>.bl-group-children {
+	display: block;
+}
+
+.bl-buddy-item {
+	display: flex;
+	align-items: center;
+	padding: 3px 8px 3px 6px;
+	margin: 1px 4px;
+	border-radius: 3px;
+	cursor: default;
+}
+
+.bl-buddy-item:hover {
+	background-color: #37373d;
+}
+
+.bl-buddy-name {
+	flex: 1;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: #cccccc;
+}
+
+.bl-buddy-lastseen {
+	font-size: 10px;
+	color: #6e6e6e;
+	margin-left: 8px;
+	white-space: nowrap;
+}
+
+.bl-protocol-badge {
+	font-size: 9px;
+	font-weight: 700;
+	padding: 1px 4px;
+	border-radius: 3px;
+	margin-right: 8px;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+/* Protocol Badge Variants */
+.proto-aim {
+	background-color: #ffd700;
+	color: #000000;
+}
+
+.proto-msn {
+	background-color: #00a4ef;
+	color: #ffffff;
+}
+
+.proto-yahoo {
+	background-color: #720e9e;
+	color: #ffffff;
+}
+
+.proto-icq {
+	background-color: #7db700;
+	color: #ffffff;
+}
+
+.proto-generic {
+	background-color: #444444;
+	color: #ffffff;
+}
+
+.bl-error {
+	padding: 12px;
+	color: #f14c4c;
+	background-color: rgba(241, 76, 76, 0.1);
+	margin: 8px;
+	border-radius: 4px;
+	border: 1px solid rgba(241, 76, 76, 0.3);
+}
+
+.lm-TrillianChatWidget {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	width: 100%;
+	background-color: #1e1e1e;
+	color: #d4d4d4;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+	font-size: 13px;
+	box-sizing: border-box;
+	user-select: text;
+}
+
+.tc-header {
+	padding: 10px 16px;
+	background-color: #252526;
+	border-bottom: 1px solid #333333;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.tc-title-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.tc-title-text {
+	font-weight: 600;
+	font-size: 14px;
+	color: #ffffff;
+}
+
+.tc-medium-badge {
+	font-size: 10px;
+	font-weight: 700;
+	padding: 2px 6px;
+	border-radius: 4px;
+	text-transform: uppercase;
+	background-color: #444444;
+	color: #ffffff;
+}
+
+.proto-aim {
+	background-color: #d8a700;
+	color: #000;
+}
+
+.proto-msn {
+	background-color: #0078d4;
+	color: #fff;
+}
+
+.proto-yahoo {
+	background-color: #6001d2;
+	color: #fff;
+}
+
+.tc-meta-row {
+	font-size: 11px;
+	color: #858585;
+}
+
+.tc-meta-row code {
+	background-color: #2d2d2d;
+	padding: 1px 4px;
+	border-radius: 3px;
+	color: #9cdcfe;
+}
+
+.tc-content-wrapper {
+	position: relative;
+	flex: 1;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
+.tc-dropzone-overlay {
+	position: absolute;
+	top: 0;
+	left: 4px;
+	right: 0;
+	bottom: 0;
+	background: rgba(30, 30, 30, 0.92);
+	border: 2px dashed #666666;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	z-index: 20;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.15s ease-in-out;
+}
+
+.tc-dropzone-overlay.active {
+	opacity: 1;
+	border: 2px dashed #007acc;
+}
+
+.tc-dropzone-overlay i {
+	font-size: 42px;
+	color: #007acc;
+	margin-bottom: 8px;
+}
+
+.tc-dropzone-overlay p {
+	margin: 0;
+	font-size: 14px;
+	color: #ffffff;
+	font-weight: 500;
+}
+
+.tc-messages-scroll {
+	flex: 1;
+	overflow-y: auto;
+	padding: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.tc-welcome-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	color: #6e6e6e;
+	text-align: center;
+	padding: 24px;
+}
+
+.tc-welcome-state i {
+	font-size: 48px;
+	margin-bottom: 12px;
+	color: #484848;
+}
+
+.tc-message-row {
+	display: flex;
+	width: 100%;
+}
+
+.tc-message-row.incoming {
+	justify-content: flex-start;
+}
+
+.tc-message-row.outgoing {
+	justify-content: flex-end;
+}
+
+.tc-message-bubble {
+	max-width: 70%;
+	padding: 8px 12px;
+	border-radius: 8px;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.tc-message-row.incoming .tc-message-bubble {
+	background-color: #262626;
+	border: 1px solid #333333;
+	border-top-left-radius: 2px;
+}
+
+.tc-message-row.outgoing .tc-message-bubble {
+	background-color: #0e4263;
+	border: 1px solid #115c8c;
+	border-top-right-radius: 2px;
+}
+
+.tc-msg-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	font-size: 11px;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+	padding-bottom: 3px;
+}
+
+.tc-msg-sender {
+	font-weight: 600;
+	color: #9cdcfe;
+}
+
+.tc-message-row.outgoing .tc-msg-sender {
+	color: #4ec9b0;
+}
+
+.tc-msg-time {
+	color: #858585;
+}
+
+.tc-msg-text {
+	word-break: break-word;
+	line-height: 1.4;
+	color: #e1e1e1;
+}

@@ -36,33 +36,149 @@ export interface TerminalFilter
 
 export interface ComponentRoute
 {
+	key?: string;
 	label: string;
 	url?: string;
 	className?: string;
 	iconClass: string; // The specific Boxicons layout string tokens
 	description?: string;
+	subtext?: string;
 }
+
+
 
 // 1. Unified metadata tree tracking every panel type and icon token
 export const MODULE_REGISTRY: Record<string, ComponentRoute> = {
-	'collapse': { label: 'Collapse', iconClass: 'bx bx-arrow-in-left-square-half' },
-	'chat': { label: 'Code Editor', url: './components/chat/widget.ts', className: 'ChatWidget', iconClass: 'bx bx-discussion' },
-	'feed': { label: 'Live Feed', url: './components/feed/widget.ts', className: 'FeedWidget', iconClass: 'bx bx-pulse' },
-	'forum': { label: 'Boards/Forum', url: './components/forum/widget.ts', className: 'ForumWidget', iconClass: 'bx bx-sitemap' },
-	//'assistant': { label: 'Automation Assistant', url: './components/assistant/widget.ts', className: 'AssistantWidget', iconClass: 'bx bx-robot' },
-	'posts': { label: 'Conversations', url: './components/posts/widget.ts', className: 'PostsWidget', iconClass: 'bx bx-history' },
-	'knowledge': { label: 'Knowledge Base', url: './components/knowledge/widget.ts', className: 'KnowledgeWidget', iconClass: 'bx bx-reading' },
-	'users': { label: 'User Profile', url: './components/user/widget.ts', className: 'UserWidget', iconClass: 'bx bx-user' },
-
-	'searchlist': { label: 'Search Files', url: './components/filelist/widget-search.ts', className: 'SearchListWidget', iconClass: 'bx bx-search' },
-	//'settings': { label: 'Edit Settings', url: './components/editor/widget-settings.ts', className: 'SettingsWidget', iconClass: 'bx bx-gear' },
-	'terminal-container': { label: 'Show Console', url: './components/terminal/widget.ts', className: 'TerminalWidget', iconClass: 'bx bx-terminal' },
-	//'graph': { label: 'Workflow Graph', url: './components/graph/widget.ts', className: 'LiteGraphWidget', iconClass: 'bx bx-chart-stacked-rows' },
-	'admin': { label: 'Administration', url: './components/admin/widget.ts', className: 'AdminWidget', iconClass: 'bx bx-slider-alt' },
+	'collapse': {
+		label: 'Collapse',
+		iconClass: 'bx bx-arrow-in-left-square-half',
+		subtext: 'Requires Lumino DockPanel container references and UI state layout persistence.',
+		description: 'Collapses active sidebars or secondary workspace panels to maximize primary viewing space across media and storage widgets.'
+	},
+	'chat': {
+		label: 'Chat Workspace',
+		url: './components/chat/widget.ts',
+		className: 'ChatWidget',
+		iconClass: 'bx bx-discussion',
+		subtext: 'Depends on WebSocket streaming protocols, message history buffers, and local LLM connector interfaces.',
+		description: 'An interactive conversational interface for real-time messaging, prompt streaming, and context management.'
+	},
+	'feed': {
+		label: 'Live Feed',
+		url: './components/feed/widget.ts',
+		className: 'FeedWidget',
+		iconClass: 'bx bx-pulse',
+		subtext: 'Depends on event-driven state streams, activity notification dispatchers, and virtualized list rendering.',
+		description: 'A real-time activity stream displaying recent system events, updates, and collaborative actions.'
+	},
+	'forum': {
+		label: 'Boards/Forum',
+		url: './components/forum/widget.ts',
+		className: 'ForumWidget',
+		iconClass: 'bx bx-sitemap',
+		subtext: 'Depends on hierarchical tree navigation modules, threaded comment parsers, and category indexing.',
+		description: 'A structured discussion board for community topics, categorized threads, and long-form collaborative problem-solving.'
+	},
+	'posts': {
+		label: 'Conversations',
+		url: './components/posts/widget.ts',
+		className: 'PostsWidget',
+		iconClass: 'bx bx-history',
+		subtext: 'Depends on archived log retrieval indexes, IndexedDB storage adapters, and JSON serialization helpers.',
+		description: 'A searchable archive of past conversational logs, saved states, and historic interaction transcripts.'
+	},
+	'knowledge': {
+		label: 'Knowledge Base',
+		url: './components/knowledge/widget.ts',
+		className: 'KnowledgeWidget',
+		iconClass: 'bx bx-reading',
+		subtext: 'Depends on Markdown rendering engines, vector search indexes, and document cross-referencing utilities.',
+		description: 'A centralized repository of documentation, guides, reference materials, and semantic search tools.'
+	},
+	'users': {
+		label: 'User Profile',
+		url: './components/user/widget.ts',
+		className: 'UserWidget',
+		iconClass: 'bx bx-user',
+		subtext: 'Depends on authentication state managers, preference storage adapters, and avatar asset handlers.',
+		description: 'A user management workspace for configuring account details, personal preferences, and security credentials.'
+	},
+	'searchlist': {
+		label: 'Search Files',
+		url: './components/filelist/widget-search.ts',
+		className: 'SearchListWidget',
+		iconClass: 'bx bx-search',
+		subtext: 'Depends on regex matching engines, virtual file system workers, and fast path indexing utilities.',
+		description: 'A lightning-fast file search interface supporting wildcard patterns, content grep, and metadata filtering.'
+	},
+	'tools': {
+		label: 'More Tools',
+		url: './components/tools/widget.ts',
+		className: 'ToolsWidget',
+		iconClass: 'bx bx-spanner',
+		subtext: 'Integrates PK3/ZIP extraction pipelines, package resolution managers, SOCKS5/UDP proxy tunnels, and WASM/Emscripten runners.',
+		description: 'A multi-tool drawer housing automated asset mirrors, package managers, proxy tunnel configurations, and engine diagnostic utilities.'
+	},
 };
 
 
 menuSelf.MODULE_REGISTRY = MODULE_REGISTRY;
+
+
+export const TOOLS_REGISTRY: Record<string, ComponentRoute> = {
+	'admin': {
+		label: 'Administration',
+		url: './components/admin/widget.ts',
+		className: 'AdminWidget',
+		iconClass: 'bx bx-slider-alt',
+		subtext: 'Depends on privilege verification guards, system metrics telemetry, and cluster management APIs.',
+		description: 'An administrative dashboard for monitoring system health, managing user permissions, and configuring server parameters.'
+	},
+	'editor': {
+		label: 'Code Editor',
+		url: './components/editor/widget.ts',
+		className: 'AceEditorWidget',
+		iconClass: 'bx bx-code-alt',
+		subtext: 'Depends on Ace editor bindings, syntax worker threads, and multi-cursor buffer synchronization modules.',
+		description: 'A full-featured code editor workspace supporting syntax highlighting, theme switching, auto-completion, and real-time document manipulation.'
+	},
+	'settings': {
+		label: 'Edit Settings',
+		url: './components/editor/widget-settings.ts',
+		className: 'SettingsWidget',
+		iconClass: 'bx bx-gear',
+		subtext: 'Depends on schema validation bindings, configuration persistence layers, and reactive state stores.',
+		description: 'A comprehensive control panel for modifying application preferences, keybindings, and environment options.'
+	},
+	'graph': {
+		label: 'Workflow Graph',
+		url: './components/graph/widget.ts',
+		className: 'LiteGraphWidget',
+		iconClass: 'bx bx-chart-stacked-rows',
+		subtext: 'Depends on 3D force simulation engines, canvas rendering loops, and node relationship topology parsers.',
+		description: 'An interactive node-based graph editor for visualizing complex workflows, data flows, and relational networks.'
+	},
+	'assistant': {
+		label: 'Automation Assistant',
+		url: './components/assistant/widget.ts',
+		className: 'AssistantWidget',
+		iconClass: 'bx bx-robot',
+		subtext: 'Depends on background workflow runners, prompt template engines, and task scheduling pipelines.',
+		description: 'An intelligent automation agent capable of executing macros, handling routine commands, and guiding user workflows.'
+	},
+	'terminal-container': {
+		label: 'Show Console',
+		url: './components/terminal/widget.ts',
+		className: 'TerminalWidget',
+		iconClass: 'bx bx-terminal',
+		subtext: 'Depends on xterm.js emulation bindings, pseudo-terminal multiplexers, and shell stream parsers.',
+		description: 'An interactive command-line interface providing shell access, process logs, and low-level debugging utilities.'
+	},
+
+};
+
+menuSelf.TOOLS_REGISTRY = TOOLS_REGISTRY;
+
 
 
 export const TERMINAL_REGISTRY: TerminalFilter[] = [

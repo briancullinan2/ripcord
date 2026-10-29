@@ -309,7 +309,12 @@ export class ChatMessageWidget extends Widget
 
 	private async generateAssistantResponse(): Promise<void>
 	{
-		if(!this.engine || !this.currentThread) return;
+		if(!this.engine || !this.currentThread)
+		{
+			return;
+		}
+
+		await this.engine;
 
 		this.isGenerating = true;
 		if(this.sendButton)

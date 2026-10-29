@@ -13,6 +13,9 @@ export class GlobalDropManager
 	private isInitialized: boolean = false;
 	private overlayEl: HTMLElement | null = null;
 	private dragCounter: number = 0; // Tracks enter/leave nesting
+	private mouseX: number = 0;
+	private mouseY: number = 0;
+	private dragLeave?: NodeJS.Timeout;
 
 	private constructor() { }
 
@@ -43,65 +46,74 @@ export class GlobalDropManager
         `;
 		document.body.appendChild(this.overlayEl);
 
-		// Prevent default browser behavior globally for drag/drop
-		['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName =>
+
+		document.addEventListener('mousemove', (e: MouseEvent) =>
 		{
-			window.addEventListener(eventName, (e) =>
-			{
-				e.preventDefault();
-				e.stopPropagation();
-			}, false);
+			this.mouseX = e.clientX;
+			this.mouseY = e.clientY;
 		});
+
+
+		window.addEventListener('dragover', (e) =>
+		{
+			e.preventDefault();
+			e.stopPropagation();
+			this.mouseX = e.clientX;
+			this.mouseY = e.clientY;
+			this.showOverlay();
+			if(this.dragLeave)
+			{
+				clearTimeout(this.dragLeave);
+				this.dragLeave = undefined;
+			}
+		}, false);
 
 		// Track drag enter/leave with a counter to prevent flicker on child elements
 		window.addEventListener('dragenter', (e: DragEvent) =>
 		{
-			if(this.hasFiles(e))
+			e.preventDefault();
+			e.stopPropagation();
+			this.showOverlay();
+			if(this.dragLeave)
 			{
-				this.dragCounter++;
-				if(this.dragCounter === 1)
-				{
-					this.showOverlay();
-				}
+				clearTimeout(this.dragLeave);
+				this.dragLeave = undefined;
 			}
 		});
 
 		window.addEventListener('dragleave', (e: DragEvent) =>
 		{
-			if(this.hasFiles(e))
-			{
-				this.dragCounter--;
-				if(this.dragCounter <= 0)
-				{
-					this.dragCounter = 0;
-					this.hideOverlay();
-				}
-			}
+			e.preventDefault();
+			e.stopPropagation();
+			this.dragCounter = 0;
+			const that = this;
+			this.dragLeave = setTimeout(() => that.hideOverlay(), 1000);
 		});
 
 		window.addEventListener('drop', async (e: DragEvent) =>
 		{
+			let has = false;
+			e.preventDefault();
+			e.stopPropagation();
 			this.dragCounter = 0;
 			this.hideOverlay();
 
 			const files = e.dataTransfer?.files;
 			if(!files || files.length === 0) return;
 
-			// 1. Check if dropped directly onto a specific .dropzone-target
-			const targetEl = (e.target as HTMLElement)?.closest('.dropzone-target');
-			if(targetEl)
-			{
-				// Dispatch a custom event so the local target can handle it if desired
-				const customDropEvent = new CustomEvent('target-dropped', {
-					detail: { files },
-					bubbles: true,
-					cancelable: true
-				});
-				targetEl.dispatchEvent(customDropEvent);
-				return;
-			}
+			// const targetEl = (e.target as HTMLElement)?.closest('[class*="dropzone"]');
+			// if(targetEl)
+			// {
+			// 	// Dispatch a custom event so the local target can handle it if desired
+			// 	const customDropEvent = new CustomEvent('target-dropped', {
+			// 		detail: { files },
+			// 		bubbles: true,
+			// 		cancelable: true
+			// 	});
+			// 	targetEl.dispatchEvent(customDropEvent);
+			// 	return;
+			// }
 
-			// 2. Fall back to active Lumino widget with dropFiles method
 			if(dragSelf.lastInteractedWidget
 				&& 'dropFiles' in dragSelf.lastInteractedWidget
 				&& typeof dragSelf.lastInteractedWidget.dropFiles === 'function')
@@ -109,11 +121,28 @@ export class GlobalDropManager
 				try
 				{
 					await dragSelf.lastInteractedWidget.dropFiles(files);
+					has = true;
 				} catch(err)
 				{
-					console.error('Error processing dropped files in lastUsedWidget:', err);
+					console.error('Error processing dropped files in lastInteractedWidget:', err);
 				}
-			} else
+			}
+
+			if(dragSelf.previousInteractedWidget
+				&& 'dropFiles' in dragSelf.previousInteractedWidget
+				&& typeof dragSelf.previousInteractedWidget.dropFiles === 'function')
+			{
+				try
+				{
+					await dragSelf.previousInteractedWidget.dropFiles(files);
+					has = true;
+				} catch(err)
+				{
+					console.error('Error processing dropped files in previousInteractedWidget:', err);
+				}
+			}
+
+			if(!has)
 			{
 				console.warn('GlobalDropManager: Files dropped, but no target or lastUsedWidget.dropFiles handler found.');
 			}
@@ -128,8 +157,38 @@ export class GlobalDropManager
 
 	private showOverlay(): void
 	{
+		let has = false;
 		document.body.classList.add('dragging');
-		if(this.overlayEl)
+		let bounds: DOMRect | undefined;
+		if(dragSelf.lastInteractedWidget)
+		{
+			const zone = dragSelf.lastInteractedWidget.node.querySelector('[class*="dropzone"]') as HTMLElement;
+			const bounds = zone.getBoundingClientRect();
+			if(this.mouseX >= bounds.x
+				&& this.mouseX <= bounds.x + bounds.width
+				&& this.mouseY >= bounds.y
+				&& this.mouseY <= bounds.y + bounds.height)
+			{
+				zone.classList.add('active');
+				has = true;
+			}
+		}
+
+		if(dragSelf.previousInteractedWidget)
+		{
+			const zone = dragSelf.previousInteractedWidget.node.querySelector('[class*="dropzone"]') as HTMLElement;
+			const bounds = zone.getBoundingClientRect();
+			if(this.mouseX >= bounds.x
+				&& this.mouseX <= bounds.x + bounds.width
+				&& this.mouseY >= bounds.y
+				&& this.mouseY <= bounds.y + bounds.height)
+			{
+				zone.classList.add('active');
+				has = true;
+			}
+		}
+
+		if(this.overlayEl && !has)
 		{
 			this.overlayEl.classList.add('active');
 		}
@@ -137,7 +196,20 @@ export class GlobalDropManager
 
 	private hideOverlay(): void
 	{
+		let zone: HTMLElement | undefined;
 		document.body.classList.remove('dragging');
+		if(dragSelf.lastInteractedWidget
+			&& (zone = dragSelf.lastInteractedWidget.node.querySelector('[class*="dropzone"]') as HTMLElement)
+		)
+		{
+			zone.classList.remove('active');
+		}
+		if(dragSelf.previousInteractedWidget
+			&& (zone = dragSelf.previousInteractedWidget.node.querySelector('[class*="dropzone"]') as HTMLElement)
+		)
+		{
+			zone.classList.remove('active');
+		}
 		if(this.overlayEl)
 		{
 			this.overlayEl.classList.remove('active');

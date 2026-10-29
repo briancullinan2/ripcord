@@ -165,7 +165,7 @@ export async function resolveLanguageContext(fileId, fileText = "", fileBuffer)
 	}
 
 	const languageMode = workerSelf.languages?.find(
-		/** @param {import('../code/widget-languages').LanguageRuntime} l */
+		/** @param {import('../rosetta/rosetta-types.d').LanguageRuntime} l */
 		(l) => l.extensions?.includes('.' + ext)
 			|| l.ace_mode === ext
 			|| l.extensions?.includes('.' + filenameAsType)

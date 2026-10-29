@@ -341,3 +341,29 @@ export interface HilightResult
 	tokenLinesChunk: any[][],
 	annotationsChunk: ParserEvent[];
 }
+
+
+
+export interface LanguageRuntime
+{
+	id: string;
+	type?: 'programming' | 'data' | 'markup';
+	color?: string;
+	extensions?: string[];
+	label: string;
+	tm_scope?: string;
+	ace_mode?: string;
+	aceMissing?: boolean;
+	languageId?: number;
+	version: string;
+	iconClass?: string;
+	installed: boolean;
+	subtext?: string;
+	description?: string;
+	grammars?: GitHubFileEntry[] | JSZip.JSZipObject[];
+	antlrSupport?: boolean;
+	antlrPercent?: number;
+	antlrCount?: number;
+	antlrTotal?: number;
+}
+

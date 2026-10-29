@@ -60,7 +60,7 @@ export class ChatWidget extends widgetSelf.AutoSidebarWidget<ThreadListWidget>
 		this.addClass('lm-ChatManagerPanel');
 
 		// Lumino Title properties for tab managers (DockPanel, TabBar, etc.)
-		this.title.label = 'Curation';
+		this.title.label = env ?? 'Chat';
 		this.title.iconClass = 'fa fa-comments';
 		this.title.closable = true;
 

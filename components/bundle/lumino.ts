@@ -225,8 +225,7 @@ function main(): void
 		// TODO: load default editor specified in localStorage
 		const userWorkspaceChoice = SettingsManager.get('core', 'workspaceDefault');
 		if(Array.from(mainDock.widgets()).length === 0
-			&& (MODULE_REGISTRY[userWorkspaceChoice]
-				|| TOOLS_REGISTRY[userWorkspaceChoice])
+			&& (MODULE_REGISTRY[userWorkspaceChoice] || TOOLS_REGISTRY[userWorkspaceChoice])
 		)
 		{
 			await triggerPanelRoute(userWorkspaceChoice, mainDock, true);
