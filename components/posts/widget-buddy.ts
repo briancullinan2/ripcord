@@ -3,6 +3,8 @@ import type { LuminoLayoutWindow } from '../bundle/lumino.d';
 import type { GlobalToolbarsWindow } from '../bundle/menu.d';
 import type { IMainpanelOptions, WidgetExtensionsWindow } from '../bundle/widget-extensions';
 import type { PostsWidget } from './widget';
+import type { FileWidgetWindow } from '../filelist/widget.d';
+import type { FileListWidget } from '../filelist/widget';
 
 export interface BuddyNode
 {
@@ -21,7 +23,7 @@ export interface GroupNode
 	children: (GroupNode | BuddyNode)[];
 }
 
-const widgetSelf: LuminoLayoutWindow & GlobalToolbarsWindow & WidgetExtensionsWindow = self as unknown as any;
+const widgetSelf: LuminoLayoutWindow & GlobalToolbarsWindow & WidgetExtensionsWindow & FileWidgetWindow = self as unknown as any;
 
 export class BuddyListWidget extends widgetSelf.SidebarChangeWidget<PostsWidget, BuddyNode>
 {
@@ -37,6 +39,8 @@ export class BuddyListWidget extends widgetSelf.SidebarChangeWidget<PostsWidget,
 			<div class="bl-tree-view"></div>
 		</div>`;
 	private _dropZone: HTMLDivElement;
+	private fileList?: FileListWidget;
+	private _dropContainer: HTMLDivElement;
 
 	constructor(title?: string, options?: IMainpanelOptions<PostsWidget, BuddyNode[]>)
 	{
@@ -48,6 +52,7 @@ export class BuddyListWidget extends widgetSelf.SidebarChangeWidget<PostsWidget,
 		// Outer UI setup
 		this.node.innerHTML = BuddyListWidget.EMPTY_TEXT;
 
+		this._dropContainer = this.node.querySelector('.bl-content-container') as HTMLDivElement;
 		this._treeContainer = this.node.querySelector('.bl-tree-view') as HTMLDivElement;
 		this._dropZone = this.node.querySelector('.bl-dropzone-overlay') as HTMLDivElement;
 	}
@@ -173,8 +178,43 @@ export class BuddyListWidget extends widgetSelf.SidebarChangeWidget<PostsWidget,
 		};
 	}
 
-	protected filterAndRender(): void
+	protected async filterAndRender(): Promise<void>
 	{
+		if(this.viewMode === this.VIEW_2)
+		{
+			if(!widgetSelf.FileListWidget)
+			{
+				await widgetSelf.preloadDependencies?.(['/components/filelist/widget.ts']);
+			}
+			if(!this.fileList && widgetSelf.FileListWidget)
+			{
+				this.fileList = new widgetSelf.FileListWidget;
+			}
+			if(this.fileList && !this.fileList.isAttached)
+			{
+				Widget.attach(this.fileList, this.node);
+			}
+			if(this.fileList)
+			{
+				this.fileList.show();
+			}
+			this._dropContainer.style.display = 'none';
+			this._dropZone.classList.remove('visible');
+
+		} else
+		{
+			if(this.fileList)
+			{
+				this.fileList.hide();
+			}
+			if(!this.allNodes || this.allNodes.length === 0)
+			{
+				this._dropContainer.style.display = 'block';
+				this._dropZone.classList.add('visible');
+			}
+		}
+
+
 		this._treeContainer.innerHTML = '';
 		if(this.allNodes && this.allNodes.length > 0)
 		{

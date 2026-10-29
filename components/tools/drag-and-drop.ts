@@ -1,8 +1,10 @@
+import { Widget } from "@lumino/widgets";
 import type { LuminoLayoutWindow } from "../bundle/lumino.d";
 
 export interface DropCapableWidget
 {
 	dropFiles(files: FileList): void | Promise<void>;
+	node: HTMLElement;
 }
 
 const dragSelf: LuminoLayoutWindow = self as unknown as any;
@@ -12,7 +14,7 @@ export class GlobalDropManager
 	private static instance: GlobalDropManager | null = null;
 	private isInitialized: boolean = false;
 	private overlayEl: HTMLElement | null = null;
-	private dragCounter: number = 0; // Tracks enter/leave nesting
+	private dragCounter: number = 0;
 	private mouseX: number = 0;
 	private mouseY: number = 0;
 	private dragLeave?: NodeJS.Timeout;
@@ -41,18 +43,16 @@ export class GlobalDropManager
             <div class="global-drop-card">
                 <i class="bx bx-cloud-upload global-drop-icon"></i>
                 <h2>Drop Files to Import</h2>
-                <p>Release anywhere to send files to the active workspace or target zone.</p>
+                <p>Release anywhere over a panel to send files to its target zone.</p>
             </div>
         `;
 		document.body.appendChild(this.overlayEl);
-
 
 		document.addEventListener('mousemove', (e: MouseEvent) =>
 		{
 			this.mouseX = e.clientX;
 			this.mouseY = e.clientY;
 		});
-
 
 		window.addEventListener('dragover', (e) =>
 		{
@@ -68,7 +68,6 @@ export class GlobalDropManager
 			}
 		}, false);
 
-		// Track drag enter/leave with a counter to prevent flicker on child elements
 		window.addEventListener('dragenter', (e: DragEvent) =>
 		{
 			e.preventDefault();
@@ -92,7 +91,6 @@ export class GlobalDropManager
 
 		window.addEventListener('drop', async (e: DragEvent) =>
 		{
-			let has = false;
 			e.preventDefault();
 			e.stopPropagation();
 			this.dragCounter = 0;
@@ -101,118 +99,137 @@ export class GlobalDropManager
 			const files = e.dataTransfer?.files;
 			if(!files || files.length === 0) return;
 
-			// const targetEl = (e.target as HTMLElement)?.closest('[class*="dropzone"]');
-			// if(targetEl)
-			// {
-			// 	// Dispatch a custom event so the local target can handle it if desired
-			// 	const customDropEvent = new CustomEvent('target-dropped', {
-			// 		detail: { files },
-			// 		bubbles: true,
-			// 		cancelable: true
-			// 	});
-			// 	targetEl.dispatchEvent(customDropEvent);
-			// 	return;
-			// }
+			// Find all visible Lumino panels from mainDock
+			const widgets = this.getVisibleWidgets();
+			let handled = false;
 
-			if(dragSelf.lastInteractedWidget
-				&& 'dropFiles' in dragSelf.lastInteractedWidget
-				&& typeof dragSelf.lastInteractedWidget.dropFiles === 'function')
+			for(const widget of widgets)
 			{
-				try
+				if(this.isPointInsideWidget(widget, this.mouseX, this.mouseY))
 				{
-					await dragSelf.lastInteractedWidget.dropFiles(files);
-					has = true;
-				} catch(err)
-				{
-					console.error('Error processing dropped files in lastInteractedWidget:', err);
+					if('dropFiles' in widget && typeof (widget as any).dropFiles === 'function')
+					{
+						try
+						{
+							await (widget as DropCapableWidget).dropFiles(files);
+							handled = true;
+							break;
+						}
+						catch(err)
+						{
+							console.error('Error processing dropped files in widget:', err);
+						}
+					}
 				}
 			}
 
-			if(dragSelf.previousInteractedWidget
-				&& 'dropFiles' in dragSelf.previousInteractedWidget
-				&& typeof dragSelf.previousInteractedWidget.dropFiles === 'function')
+			if(!handled)
 			{
-				try
-				{
-					await dragSelf.previousInteractedWidget.dropFiles(files);
-					has = true;
-				} catch(err)
-				{
-					console.error('Error processing dropped files in previousInteractedWidget:', err);
-				}
-			}
-
-			if(!has)
-			{
-				console.warn('GlobalDropManager: Files dropped, but no target or lastUsedWidget.dropFiles handler found.');
+				console.warn('GlobalDropManager: Files dropped, but no valid drop target widget was found under the cursor.');
 			}
 		});
 	}
 
-	private hasFiles(e: DragEvent): boolean
+	private getVisibleWidgets(): Widget[]
 	{
-		if(!e.dataTransfer?.types) return false;
-		return Array.from(e.dataTransfer.types).includes('Files');
+		if(!dragSelf.mainDock || typeof dragSelf.mainDock.widgets !== 'function')
+		{
+			return [];
+		}
+		try
+		{
+			// Filter down to widgets currently active/visible in the dock layout
+			const allWidgets = Array.from(dragSelf.mainDock.widgets());
+			return allWidgets.filter(w => w && w.node && w.node.isConnected && w.node.offsetParent !== null);
+		}
+		catch(err)
+		{
+			console.error('GlobalDropManager: Failed to retrieve dock widgets:', err);
+			return [];
+		}
+	}
+
+	private isPointInsideWidget(widget: Widget, x: number, y: number): boolean
+	{
+		if(!widget.node) return false;
+		const rect = widget.node.getBoundingClientRect();
+		return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
 	}
 
 	private showOverlay(): void
 	{
-		let has = false;
 		document.body.classList.add('dragging');
-		let bounds: DOMRect | undefined;
-		if(dragSelf.lastInteractedWidget)
+		const widgets = this.getVisibleWidgets();
+		let matchedWidget: Widget | null = null;
+
+		// Check if mouse is over any drop-capable widget
+		for(const widget of widgets)
 		{
-			const zone = dragSelf.lastInteractedWidget.node.querySelector('[class*="dropzone"]') as HTMLElement;
-			const bounds = zone.getBoundingClientRect();
-			if(this.mouseX >= bounds.x
-				&& this.mouseX <= bounds.x + bounds.width
-				&& this.mouseY >= bounds.y
-				&& this.mouseY <= bounds.y + bounds.height)
+			if(this.isPointInsideWidget(widget, this.mouseX, this.mouseY))
 			{
-				zone.classList.add('active');
-				has = true;
+				if('dropFiles' in widget && typeof (widget as DropCapableWidget).dropFiles === 'function')
+				{
+					matchedWidget = widget;
+					break;
+				}
 			}
 		}
 
-		if(dragSelf.previousInteractedWidget)
+		if(matchedWidget && matchedWidget.node)
 		{
-			const zone = dragSelf.previousInteractedWidget.node.querySelector('[class*="dropzone"]') as HTMLElement;
-			const bounds = zone.getBoundingClientRect();
-			if(this.mouseX >= bounds.x
-				&& this.mouseX <= bounds.x + bounds.width
-				&& this.mouseY >= bounds.y
-				&& this.mouseY <= bounds.y + bounds.height)
+			// Size and snap indicator to the matched panel's exact size/position
+			const rect = matchedWidget.node.getBoundingClientRect();
+			if(this.overlayEl)
 			{
-				zone.classList.add('active');
-				has = true;
+				this.overlayEl.style.top = `${rect.top}px`;
+				this.overlayEl.style.left = `${rect.left}px`;
+				this.overlayEl.style.width = `${rect.width}px`;
+				this.overlayEl.style.height = `${rect.height}px`;
+				this.overlayEl.classList.add('active', 'panel-matched');
 			}
-		}
 
-		if(this.overlayEl && !has)
+			// Also flag internal dropzones if present
+			const zone = matchedWidget.node.querySelector('[class*="dropzone"]') as HTMLElement;
+			if(zone) zone.classList.add('active');
+		}
+		else
 		{
-			this.overlayEl.classList.add('active');
+			// Fallback to full screen/viewport dimensions if not over a specific panel
+			if(this.overlayEl)
+			{
+				this.overlayEl.style.top = '0px';
+				this.overlayEl.style.left = '0px';
+				this.overlayEl.style.width = '100vw';
+				this.overlayEl.style.height = '100vh';
+				this.overlayEl.classList.add('active');
+				this.overlayEl.classList.remove('panel-matched');
+			}
 		}
 	}
 
 	private hideOverlay(): void
 	{
-		let zone: HTMLElement | undefined;
 		document.body.classList.remove('dragging');
-		if(dragSelf.lastInteractedWidget
-			&& (zone = dragSelf.lastInteractedWidget.node.querySelector('[class*="dropzone"]') as HTMLElement)
-		)
+
+		// Clean up any active dropzone classes on widgets
+		const widgets = this.getVisibleWidgets();
+		for(const widget of widgets)
 		{
-			zone.classList.remove('active');
+			if(widget.node)
+			{
+				const zone = widget.node.querySelector('[class*="dropzone"]') as HTMLElement;
+				if(zone) zone.classList.remove('active');
+			}
 		}
-		if(dragSelf.previousInteractedWidget
-			&& (zone = dragSelf.previousInteractedWidget.node.querySelector('[class*="dropzone"]') as HTMLElement)
-		)
-		{
-			zone.classList.remove('active');
-		}
+
 		if(this.overlayEl)
 		{
-			this.overlayEl.classList.remove('active');
+			this.overlayEl.classList.remove('active', 'panel-matched');
+			// Reset inline styles back to default
+			this.overlayEl.style.top = '';
+			this.overlayEl.style.left = '';
+			this.overlayEl.style.width = '';
+			this.overlayEl.style.height = '';
 		}
 	}
 }

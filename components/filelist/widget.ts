@@ -348,6 +348,8 @@ export class FileListWidget extends filelistSelf.SingletonSidebarWidget implemen
 							});
 						}
 					}
+
+					return nodes;
 				}
 			}
 		}

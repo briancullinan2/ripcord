@@ -105,9 +105,9 @@ export class GenericSearchableWidget extends WidgetWithSearchBar implements ITab
 		if('renderLayout' in this && typeof this.renderLayout === 'function')
 		{
 			this.renderLayout();
-		} else if('renderAndFilter' in this && typeof this.renderAndFilter === 'function')
+		} else if('filterAndRender' in this && typeof this.filterAndRender === 'function')
 		{
-			this.renderAndFilter();
+			this.filterAndRender();
 		}
 		this.fit();
 		this.update();
@@ -360,9 +360,9 @@ export abstract class WithChangingWidget<TMain extends WithChangingWidget<TMain,
 	public isEditing: boolean = false;
 
 	protected abstract filterAndRender(): void;
+
 	protected createNew(type?: any): void
 	{
-
 	}
 
 	public get itemsChanged(): ISignal<TMain, TList[]>

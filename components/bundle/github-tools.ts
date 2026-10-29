@@ -270,7 +270,7 @@ export interface NestedTreeNode
 
 export function convertFlatToNested(data: FlatFileNode[]): NestedTreeNode[]
 {
-	return data.reduce((acc: NestedTreeNode[], item: FlatFileNode) =>
+	return sortNodes(data.reduce((acc: NestedTreeNode[], item: FlatFileNode) =>
 	{
 		const parts = item.path.split('/');
 		let currentLevel = acc;
@@ -312,67 +312,74 @@ export function convertFlatToNested(data: FlatFileNode[]): NestedTreeNode[]
 			currentLevel = existingPath.children;
 		});
 
-		return sortNodes(acc);
-	}, []);
+		return acc;
+	}, []));
 };
 
 githubSelf.convertFlatToNested = convertFlatToNested;
 
-
-export function sortNodes(nodes: NestedTreeNode[], recursion: NestedTreeNode[] = []): NestedTreeNode[]
+export function sortNodes(nodes: NestedTreeNode[]): NestedTreeNode[]
 {
-	nodes.sort((a, b) =>
+	if(!Array.isArray(nodes) || nodes.length === 0) return nodes;
+
+	const stack: NestedTreeNode[][] = [nodes];
+	const visited = new Set<NestedTreeNode>();
+
+	while(stack.length > 0)
 	{
-		const isDirectory = (node: NestedTreeNode): boolean =>
+		const currentLevel = stack.pop()!;
+		if(!Array.isArray(currentLevel) || currentLevel.length === 0) continue;
+
+		// 1. Pre-compute directory status for this level
+		const dirMap = new Map<NestedTreeNode, boolean>();
+		for(const node of currentLevel)
 		{
-			// 1. Bitmask check if mode is present
+			let isDir = false;
 			if(typeof node.mode === 'number')
 			{
 				if(typeof githubSelf.ST_FILE === 'number' && ((node.mode >> 12) & githubSelf.ST_FILE))
 				{
-					return false;
-				}
-				if(typeof githubSelf.ST_DIR === 'number' && ((node.mode >> 12) & githubSelf.ST_DIR))
+					isDir = false;
+				} else if(typeof githubSelf.ST_DIR === 'number' && ((node.mode >> 12) & githubSelf.ST_DIR))
 				{
-					return true;
+					isDir = true;
 				}
 			}
-
-			// 2. Check if children array or lazy-loading placeholder exists
-			if(node.children !== null && node.children !== undefined)
+			if(!isDir && Array.isArray(node.children) && node.children.length > 0)
 			{
-				return true;
+				isDir = true;
 			}
-			return false;
-		};
-
-		const aIsDir = isDirectory(a);
-		const bIsDir = isDirectory(b);
-
-		// 1. Directories up top, files below
-		if(aIsDir && !bIsDir) return -1;
-		if(!aIsDir && bIsDir) return 1;
-
-		// 2. Natural case-insensitive alphabetical sort
-		return a.text.localeCompare(b.text, undefined, { numeric: true, sensitivity: 'base' });
-	});
-
-	// 3. Recurse into valid child arrays
-	nodes.forEach(node =>
-	{
-		if(recursion.includes(node))
-		{
-			return;
+			dirMap.set(node, isDir);
 		}
-		if(Array.isArray(node.children) && node.children.length > 0)
+
+		// 2. Sort current level in place
+		currentLevel.sort((a, b) =>
 		{
-			recursion[recursion.length] = node;
-			sortNodes(node.children, recursion);
+			const aIsDir = dirMap.get(a) ?? false;
+			const bIsDir = dirMap.get(b) ?? false;
+
+			if(aIsDir && !bIsDir) return -1;
+			if(!aIsDir && bIsDir) return 1;
+
+			return (a.text || '').localeCompare(b.text || '', undefined, { numeric: true, sensitivity: 'base' });
+		});
+
+		// 3. Push child arrays onto the stack, guarding against circular loops
+		for(const node of currentLevel)
+		{
+			if(visited.has(node)) continue;
+			visited.add(node);
+
+			if(Array.isArray(node.children) && node.children.length > 0)
+			{
+				stack.push(node.children);
+			}
 		}
-	});
+	}
 
 	return nodes;
 }
 
 
 githubSelf.sortNodes = sortNodes;
+
