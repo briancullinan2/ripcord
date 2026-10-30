@@ -1,10 +1,13 @@
 import { Widget } from '@lumino/widgets';
-import type { LuminoLayoutWindow } from '../bundle/lumino.d';
+import type { FileSystemWindow, LuminoLayoutWindow } from '../bundle/lumino.d';
 import type { GlobalToolbarsWindow } from '../bundle/menu.d';
 import type { IMainpanelOptions, WidgetExtensionsWindow } from '../bundle/widget-extensions';
 import type { PostsWidget } from './widget';
 import type { FileWidgetWindow } from '../filelist/widget.d';
 import type { FileListWidget } from '../filelist/widget';
+import type { NestedTreeNode } from '../bundle/github-tools';
+import { BuddyUtilities } from './widget-utils';
+import type { LocalWindow } from '../bundle/local.d';
 
 export interface BuddyNode
 {
@@ -23,7 +26,8 @@ export interface GroupNode
 	children: (GroupNode | BuddyNode)[];
 }
 
-const widgetSelf: LuminoLayoutWindow & GlobalToolbarsWindow & WidgetExtensionsWindow & FileWidgetWindow = self as unknown as any;
+const widgetSelf: LuminoLayoutWindow & GlobalToolbarsWindow & WidgetExtensionsWindow & FileWidgetWindow
+	& FileSystemWindow & LocalWindow = self as unknown as any;
 
 export class BuddyListWidget extends widgetSelf.SidebarChangeWidget<PostsWidget, BuddyNode>
 {
@@ -111,7 +115,6 @@ export class BuddyListWidget extends widgetSelf.SidebarChangeWidget<PostsWidget,
 
 		const rootNodes: (GroupNode | BuddyNode)[] = [];
 
-		// Parse root sections or direct groups
 		const sections = xmlDoc.querySelectorAll('buddies > section');
 		if(sections.length > 0)
 		{
@@ -322,17 +325,56 @@ if(!widgetSelf.FileListWidget)
 
 export class BuddyLogsWidget extends widgetSelf.FileListWidget!
 {
+	protected nodes: NestedTreeNode[] | undefined;
 
 	protected async initializeFiletrees(): Promise<void>
 	{
 		if(this.handle)
 		{
 			this.bindMutationObserver();
-			const nodes = await this.fetchLocalFiles();
-			this.showFileTree(undefined, nodes);
+			this.nodes = await this.fetchLocalFiles();
+			this.showFileTree(undefined, this.nodes);
+			this.loadLogs();
 		} else if(this._treeContainer)
 		{
 			this._treeContainer.innerHTML = BuddyListWidget.EMPTY_FILES_TEXT;
 		}
 	}
+
+
+	protected async loadLogs()
+	{
+		if(!this.handle)
+		{
+			return;
+		}
+
+		const dirs = [this.handle];
+		let current: FileSystemDirectoryHandle | undefined = undefined;
+		while((current = dirs.pop()))
+		{
+			const list = await widgetSelf.listDirectory(current);
+			for(const f of Object.values(list))
+			{
+				if(f.contents instanceof FileSystemFileHandle
+					&& (f.path.endsWith('.xml') || f.path.endsWith('.log'))
+				)
+				{
+					const contents = await (await (f.contents as FileSystemFileHandle).getFile()).arrayBuffer();
+					const session = BuddyUtilities.parseAndRenderLog(new TextDecoder().decode(contents));
+					const name = f.path.split('/').pop() ?? f.path;
+					await BuddyUtilities.saveThreadMeta(session, this.defaultRepository);
+					await BuddyUtilities.saveAllMessages(name, session.messages, this.defaultRepository);
+				}
+				else if((f.mode >> 12) & (widgetSelf.FS_DIR ?? (0o040000 | 0o755))
+					&& f.contents instanceof FileSystemDirectoryHandle
+				)
+				{
+					dirs.push(f.contents);
+				}
+			}
+		}
+
+	}
+
 }

@@ -1,12 +1,13 @@
 import type { SettingConfig } from "../bundle/settings";
 import type { FileListWidget } from "./widget";
 import type { GitHubFileEntry } from "../bundle/github-types";
-import type { LuminoLayoutWindow } from "../bundle/lumino.d";
+import type { FileSystemWindow, LuminoLayoutWindow } from "../bundle/lumino.d";
 import type { GlobalToolbarsWindow, LuminoMenuWindow } from "../bundle/menu.d";
 import type { FilelistWindow, FileSystemHandle } from "./widget.d";
 
 
-const filelistSelf: LuminoLayoutWindow & GlobalToolbarsWindow & FilelistWindow & LuminoMenuWindow = self as unknown as any;
+const filelistSelf: LuminoLayoutWindow & GlobalToolbarsWindow & FilelistWindow & LuminoMenuWindow
+	& FileSystemWindow = self as unknown as any;
 
 interface FileSystemHandlePermissionDescriptor
 {
@@ -299,3 +300,5 @@ export async function listDirectory(
 	return records;
 }
 
+
+filelistSelf.listDirectory = listDirectory;

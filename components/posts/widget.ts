@@ -1,8 +1,8 @@
-import { Widget } from '@lumino/widgets';
 import type { IMainpanelOptions, WidgetExtensionsWindow } from '../bundle/widget-extensions';
 import type { GlobalToolbarsWindow } from '../bundle/menu.d';
 import type { LuminoLayoutWindow } from '../bundle/lumino.d';
 import { BuddyListWidget, BuddyNode } from './widget-buddy';
+import { BuddyUtilities } from './widget-utils';
 
 export interface ChatMessage
 {
@@ -12,6 +12,8 @@ export interface ChatMessage
 	text: string;
 	timestamp: string;
 	medium: string;
+	parent?: string;
+	path?: string;
 }
 
 export interface ChatSession
@@ -21,6 +23,8 @@ export interface ChatSession
 	fromUser: string;
 	startTime?: string;
 	messages: ChatMessage[];
+	parent?: string;
+	path?: string;
 }
 
 
@@ -71,98 +75,14 @@ export class PostsWidget extends widgetSelf.WithChangingWidget<PostsWidget, Budd
 				const content = event.target?.result as string;
 				if(content)
 				{
-					this.parseAndRenderLog(content);
+					this.currentSession = BuddyUtilities.parseAndRenderLog(content);
+					this.filterAndRender();
 				}
 			};
 			reader.readAsText(file);
 		}
 	}
 
-
-	public parseAndRenderLog(rawContent: string): void
-	{
-		const lines = rawContent.split(/\r?\n/);
-		const session: ChatSession = {
-			medium: 'IM',
-			toUser: '',
-			fromUser: '',
-			messages: []
-		};
-
-		// Regex matchers matching your python logic
-		const sessionXmlPattern = /<session\s+([^>]+)>/i;
-		const messageXmlPattern = /<message\s+([^>]+)>/i;
-
-		for(const line of lines)
-		{
-			const trimmed = line.trim();
-			if(!trimmed) continue;
-
-			if(sessionXmlPattern.test(trimmed))
-			{
-				session.medium = this._extractAttr(trimmed, 'medium') || 'IM';
-				session.toUser = this._safeDecode(this._extractAttr(trimmed, 'to') || '');
-				session.fromUser = this._safeDecode(this._extractAttr(trimmed, 'from') || '');
-				const timeVal = this._extractAttr(trimmed, 'time');
-				if(timeVal)
-				{
-					const ts = parseInt(timeVal, 10);
-					if(!isNaN(ts))
-					{
-						session.startTime = new Date(ts * 1000).toLocaleString();
-					}
-				}
-			} else if(messageXmlPattern.test(trimmed))
-			{
-				const msgType = this._extractAttr(trimmed, 'type') || 'incoming_privateMessage';
-				const timeVal = this._extractAttr(trimmed, 'time');
-				const textVal = this._extractAttr(trimmed, 'text') || '';
-				const fromVal = this._extractAttr(trimmed, 'from') || '';
-				const displayVal = this._extractAttr(trimmed, 'from_display') || fromVal;
-
-				let timestampStr = '';
-				if(timeVal)
-				{
-					const ts = parseInt(timeVal, 10);
-					if(!isNaN(ts))
-					{
-						timestampStr = new Date(ts * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-					}
-				}
-
-				const isOutgoing = msgType.includes('outgoing');
-				session.messages.push({
-					type: isOutgoing ? 'outgoing' : 'incoming',
-					sender: this._safeDecode(fromVal),
-					displaySender: this._safeDecode(displayVal),
-					text: this._safeDecode(textVal),
-					timestamp: timestampStr,
-					medium: session.medium
-				});
-			}
-		}
-
-		this.currentSession = session;
-		this.filterAndRender();
-	}
-
-	private _extractAttr(tagString: string, attrName: string): string | null
-	{
-		const regex = new RegExp(`${attrName}="([^"]*)"`, 'i');
-		const match = tagString.match(regex);
-		return match ? match[1] : null;
-	}
-
-	private _safeDecode(val: string): string
-	{
-		try
-		{
-			return decodeURIComponent(val.replace(/\+/g, ' '));
-		} catch
-		{
-			return val;
-		}
-	}
 
 	protected filterAndRender(): void
 	{

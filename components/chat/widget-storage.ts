@@ -3,13 +3,13 @@ import type { IChatMessage, IThreadMeta } from "./widget";
 
 const storageSelf: LocalWindow = self as unknown as any;
 
-
 export class ChatStorageEngine
 {
 	private env: string;
 	private dbName: string;
 	private db: IDBDatabase | null = null;
-	private static META_STORE = '_threads_meta';
+	public static META_STORE = '_threads_meta';
+
 
 	constructor(env = 'development')
 	{
@@ -23,20 +23,6 @@ export class ChatStorageEngine
 	 */
 	public async init(plusOne?: boolean): Promise<void>
 	{
-		const defaultStores: SchemaStoreConfig[] = [
-			{
-				key: ChatStorageEngine.META_STORE,
-				value: {
-					item1: 'path',
-					item2: [
-						{ key: 'timestamp', value: 'timestamp' },
-						{ key: 'parent', value: 'parent' }
-					] as SchemaIndexConfig[]
-				}
-			}
-		];
-
-		// Preference 1: Global setupDatabase helper
 		const installCheck = await storageSelf.needsInstall?.(this.dbName, defaultStores);
 		const shouldInstall = installCheck?.item3;
 		if(shouldInstall && typeof storageSelf.deleteOldDatabase === 'function')
@@ -56,10 +42,8 @@ export class ChatStorageEngine
 			return;
 		}
 
-		// Preference 3: Standard IndexedDB connection with safe schema verification
 		const currentVersion = await this.getCurrentDBVersion();
 
-		debugger;
 		await new Promise<void>((resolve, reject) =>
 		{
 			const req = indexedDB.open(this.dbName, (plusOne ? 1 : 0) + currentVersion);
@@ -339,3 +323,16 @@ export class ChatStorageEngine
 		});
 	}
 }
+
+const defaultStores: SchemaStoreConfig[] = [
+	{
+		key: ChatStorageEngine.META_STORE,
+		value: {
+			item1: 'path',
+			item2: [
+				{ key: 'timestamp', value: 'timestamp' },
+				{ key: 'parent', value: 'parent' }
+			] as SchemaIndexConfig[]
+		}
+	}
+];

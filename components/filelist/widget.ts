@@ -124,7 +124,7 @@ export class FileListWidget extends filelistSelf.SingletonSidebarWidget implemen
 
 		const branch = (this.node.querySelector('.filelist-branch') as HTMLSelectElement);
 		const branches = await filelistSelf.getBranches?.(ownerName, repoName);
-		if(branches)
+		if(branches && branches[0])
 		{
 			filelistSelf.updateSelectOptions?.(branch, branches, branches[0].name);
 		}
@@ -248,7 +248,6 @@ export class FileListWidget extends filelistSelf.SingletonSidebarWidget implemen
 		const nodes = await this.fetchFiles();
 		this.showFileTree(undefined, nodes);
 	}
-
 
 
 	protected async fetchLocalFiles(folderId?: string): Promise<NestedTreeNode[] | undefined>

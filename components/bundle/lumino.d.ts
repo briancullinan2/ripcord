@@ -79,6 +79,10 @@ export interface FileSystemWindow
 
 	ensureDatabaseContainer?: (database: string) => Promise<void>;
 	globalModules?: Record<string, Record<string, Function>>;
+	listDirectory: (
+		dirHandle: FileSystemDirectoryHandle,
+		relPath: string = ''
+	) => Promise<Record<string, GitHubFileEntry>>;
 }
 
 export interface LevenshteinWindow
