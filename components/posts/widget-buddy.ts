@@ -38,6 +38,14 @@ export class BuddyListWidget extends widgetSelf.SidebarChangeWidget<PostsWidget,
 			</div>
 			<div class="bl-tree-view"></div>
 		</div>`;
+	static EMPTY_FILES_TEXT = `
+		<div class="bl-content-container">
+			<div class="bl-dropzone-overlay visible">
+				<i class="bx bx-cloud-upload"></i>
+				<p>Open a Folder of <code>.xml</code> or <code>.log</code> Files.</p>
+			</div>
+			<div class="bl-tree-view"></div>
+		</div>`;
 	private _dropZone: HTMLDivElement;
 	private fileList?: FileListWidget;
 	private _dropContainer: HTMLDivElement;
@@ -184,7 +192,7 @@ export class BuddyListWidget extends widgetSelf.SidebarChangeWidget<PostsWidget,
 		{
 			if(!this.fileList && widgetSelf.FileListWidget)
 			{
-				this.fileList = new widgetSelf.FileListWidget;
+				this.fileList = new BuddyLogsWidget;
 			}
 			if(this.fileList && !this.fileList.isAttached)
 			{
@@ -324,7 +332,7 @@ export class BuddyLogsWidget extends widgetSelf.FileListWidget!
 			this.showFileTree(undefined, nodes);
 		} else if(this._treeContainer)
 		{
-			this._treeContainer.innerHTML = BuddyListWidget.EMPTY_TEXT;
+			this._treeContainer.innerHTML = BuddyListWidget.EMPTY_FILES_TEXT;
 		}
 	}
 }

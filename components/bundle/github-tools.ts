@@ -8,6 +8,7 @@ import
 {
 	DB_STORE_NAME, debounceRecords
 	, FS_DIR, FS_FILE, getRecord, putRecord,
+	ST_DIR,
 	ST_FILE
 } from "./local";
 import { GithubWindow } from "./github.d";
@@ -268,53 +269,60 @@ export interface NestedTreeNode
 	children?: NestedTreeNode[] | null | undefined;
 }
 
+
 export function convertFlatToNested(data: FlatFileNode[]): NestedTreeNode[]
 {
-	return sortNodes(data.reduce((acc: NestedTreeNode[], item: FlatFileNode) =>
+	const rootAcc: NestedTreeNode[] = [];
+
+	for(const item of data)
 	{
 		const parts = item.path.split('/');
-		let currentLevel = acc;
+		let currentLevel = rootAcc;
+		let cumulativePath = '';
 
 		parts.forEach((part, i) =>
 		{
+			cumulativePath = cumulativePath ? `${cumulativePath}/${part}` : part;
 			let existingPath = currentLevel.find(node => node.text === part);
+
+			const isLast = i === parts.length - 1;
 
 			if(!existingPath)
 			{
+				const isDir = !isLast || item.type === 'tree' || (typeof item.mode === 'number' ? (item.mode >> 12) & (ST_DIR ?? 4) : false);
+
 				existingPath = {
-					id: `${item.sha ?? item.path}`,
+					id: isLast ? `${item.sha ?? cumulativePath}` : cumulativePath,
 					text: part,
 					status: 0,
 					state: {
 						open: false,
 						expanded: false
 					},
-					path: item.path,
-					sha: item.sha,
-					mode: ((typeof item.mode === 'string'
-						? parseInt('' + item.mode, 8) : item.mode ?? 8) >> 12) & ST_FILE
-						? FS_FILE : FS_DIR
-				};
+					path: cumulativePath,
+					sha: isLast ? item.sha : undefined,
+					mode: isDir ? FS_DIR : (
+						((typeof item.mode === 'string' ? parseInt('' + item.mode, 8) : item.mode ?? 8) >> 12) & ST_FILE
+							? FS_FILE : FS_DIR
+					),
+					children: isDir ? [{ text: 'Loading...', id: `${item.path}/loading`, path: `${item.path}/loading`, status: 0, state: { open: false, expanded: false } } as NestedTreeNode] : undefined,
 
-				if(i < parts.length - 1 || item.type === 'tree')
-				{
-					existingPath.children = [];
-				}
+				};
 
 				currentLevel.push(existingPath);
 			}
 
-			if(!existingPath.children)
+			// If it's a directory node, move down into its children level
+			if(existingPath.children)
 			{
-				return;
+				currentLevel = existingPath.children;
 			}
-
-			currentLevel = existingPath.children;
 		});
+	}
 
-		return acc;
-	}, []));
-};
+	return sortNodes(rootAcc);
+}
+
 
 githubSelf.convertFlatToNested = convertFlatToNested;
 

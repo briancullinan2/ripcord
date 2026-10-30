@@ -179,10 +179,9 @@ export class FileListWidget extends filelistSelf.SingletonSidebarWidget implemen
 		this.node.querySelector('[href="#new-folder"]')?.addEventListener('click', async (event) =>
 		{
 			event.preventDefault();
-			let handle: FileSystemDirectoryHandle | undefined;
 			try
 			{
-				handle = await filelistSelf.showDirectoryPicker?.({
+				this.handle = await filelistSelf.showDirectoryPicker?.({
 					mode: 'readwrite'
 				});
 			}
@@ -199,10 +198,11 @@ export class FileListWidget extends filelistSelf.SingletonSidebarWidget implemen
 			await filelistSelf.putRecord?.(filelistSelf.DB_STORE_NAME ?? '', {
 				timestamp: new Date(),
 				mode: filelistSelf.FS_FILE ?? (0o100000 | 0o666),
-				contents: handle,
+				contents: this.handle,
 				path: '/' + settingKey,
 				parent: '/'
 			}, database);
+			await this.initializeFiletrees();
 		});
 		this.container = this.node.querySelector(this.selector) as HTMLDivElement;
 		this.container?.addEventListener('click', treeHandler.bind(this, this.selector));
@@ -262,7 +262,7 @@ export class FileListWidget extends filelistSelf.SingletonSidebarWidget implemen
 
 		// Strip the database handle prefix to isolate the relative folder path
 		const relativeSegments = parts?.slice(2);
-		const baseDir = relativeSegments?.join('/');
+		const baseDir = relativeSegments?.join('/') ?? this.handle.name;
 		const basePath = folderId && this.loadedDatabases[folderId]
 			? this.loadedDatabases[folderId].path : baseDir;
 
@@ -284,7 +284,7 @@ export class FileListWidget extends filelistSelf.SingletonSidebarWidget implemen
 			for(let n of nodes)
 			{
 				n.id = database + '/' + n.id;
-				n.path = basePath + '/' + n.path;
+				n.path = folderId ? basePath + '/' + n.path : n.path;
 				const isDir = n.mode ? (n.mode >> 12) & (filelistSelf.ST_DIR ?? 4) : false;
 				n.children = isDir ? [{ text: 'Loading...', id: `${n.path}/loading`, path: `${n.path}/loading`, status: 0, state: { open: false, expanded: false } } as NestedTreeNode] : null;
 
@@ -388,7 +388,9 @@ export class FileListWidget extends filelistSelf.SingletonSidebarWidget implemen
 		}
 
 		const activeTree = filelistSelf.trees?.[this.selector];
-		if(!activeTree && filelistSelf.trees)
+		if((!activeTree || !folderId) && filelistSelf.trees
+			&& (nodes ?? this.loadedDatabases[database].children)
+		)
 		{
 			filelistSelf.trees[this.selector] = filelistSelf.trees[database] = new Tree(this.selector, {
 				data: nodes ?? this.loadedDatabases[database].children,

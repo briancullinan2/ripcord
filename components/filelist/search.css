@@ -93,3 +93,7 @@
 	color: #6a9955;
 	font-style: italic;
 }
+
+.ide-file-tree-widget {
+	height: 100%;
+}
