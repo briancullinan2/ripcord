@@ -182,10 +182,6 @@ export class BuddyListWidget extends widgetSelf.SidebarChangeWidget<PostsWidget,
 	{
 		if(this.viewMode === this.VIEW_2)
 		{
-			if(!widgetSelf.FileListWidget)
-			{
-				await widgetSelf.preloadDependencies?.(['/components/filelist/widget.ts']);
-			}
 			if(!this.fileList && widgetSelf.FileListWidget)
 			{
 				this.fileList = new widgetSelf.FileListWidget;
@@ -305,6 +301,30 @@ export class BuddyListWidget extends widgetSelf.SidebarChangeWidget<PostsWidget,
 		} catch
 		{
 			return val;
+		}
+	}
+}
+
+
+if(!widgetSelf.FileListWidget)
+{
+	await widgetSelf.preloadDependencies?.(['/components/filelist/widget.ts']);
+}
+
+
+export class BuddyLogsWidget extends widgetSelf.FileListWidget!
+{
+
+	protected async initializeFiletrees(): Promise<void>
+	{
+		if(this.handle)
+		{
+			this.bindMutationObserver();
+			const nodes = await this.fetchLocalFiles();
+			this.showFileTree(undefined, nodes);
+		} else if(this._treeContainer)
+		{
+			this._treeContainer.innerHTML = BuddyListWidget.EMPTY_TEXT;
 		}
 	}
 }

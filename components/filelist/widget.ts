@@ -37,6 +37,7 @@ export class FileListWidget extends filelistSelf.SingletonSidebarWidget implemen
 	protected treeLoading: boolean = false;
 	protected refreshTreeTimer: ReturnType<typeof setTimeout> | undefined;
 	public _source?: string;
+	protected _treeContainer?: HTMLDivElement;
 
 	protected get selector()
 	{
@@ -102,11 +103,10 @@ export class FileListWidget extends filelistSelf.SingletonSidebarWidget implemen
 					</li>
 				</ul>
 				<div class="search-box">
-				<input type="text" id="search" name="search" placeholder="Search many..." />
+					<input type="text" id="search" name="search" placeholder="Search many..." />
 				</div>
 				<div id="${this.treeContainerId}" class="treejs-render-target"></div>
-			</div>
-			`;
+			</div>`;
 
 		const parts = this.defaultRepository.split('/');
 		const ownerName = parts.length === 2 ? parts[0] : filelistSelf.RepositoryToolbar?.owner?.value;
@@ -128,7 +128,9 @@ export class FileListWidget extends filelistSelf.SingletonSidebarWidget implemen
 		{
 			filelistSelf.updateSelectOptions?.(branch, branches, branches[0].name);
 		}
+		this._treeContainer = this.node.querySelector('.treejs-render-target') as HTMLDivElement;
 	}
+
 
 	protected override onAfterAttach(msg: Message): void
 	{
@@ -206,6 +208,7 @@ export class FileListWidget extends filelistSelf.SingletonSidebarWidget implemen
 		this.container?.addEventListener('click', treeHandler.bind(this, this.selector));
 	}
 
+
 	protected async initializeFiletrees(): Promise<void>
 	{
 		if(this.constructor.name === 'SearchListWidget')
@@ -241,14 +244,14 @@ export class FileListWidget extends filelistSelf.SingletonSidebarWidget implemen
 			const database = `${owner}/${repo}`;
 			this.handleKey = database;
 		}
-		const nodes = await this.fetchFiles();
 
+		const nodes = await this.fetchFiles();
 		this.showFileTree(undefined, nodes);
 	}
 
 
 
-	private async fetchLocalFiles(folderId?: string): Promise<NestedTreeNode[] | undefined>
+	protected async fetchLocalFiles(folderId?: string): Promise<NestedTreeNode[] | undefined>
 	{
 		if(!this.handle || !this.handleKey)
 		{
