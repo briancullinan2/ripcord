@@ -351,26 +351,34 @@ export class BuddyLogsWidget extends widgetSelf.FileListWidget!
 
 		const dirs = [this.handle];
 		let current: FileSystemDirectoryHandle | undefined = undefined;
-		while((current = dirs.pop()))
+		while(true)
 		{
+			current = dirs.pop();
+			if(!current) break;
 			const list = await widgetSelf.listDirectory(current);
 			for(const f of Object.values(list))
 			{
-				if(f.contents instanceof FileSystemFileHandle
-					&& (f.path.endsWith('.xml') || f.path.endsWith('.log'))
-				)
+				try
 				{
-					const contents = await (await (f.contents as FileSystemFileHandle).getFile()).arrayBuffer();
-					const session = BuddyUtilities.parseAndRenderLog(new TextDecoder().decode(contents));
-					const name = f.path.split('/').pop() ?? f.path;
-					await BuddyUtilities.saveThreadMeta(session, this.defaultRepository);
-					await BuddyUtilities.saveAllMessages(name, session.messages, this.defaultRepository);
-				}
-				else if((f.mode >> 12) & (widgetSelf.FS_DIR ?? (0o040000 | 0o755))
-					&& f.contents instanceof FileSystemDirectoryHandle
-				)
+					if(f.contents instanceof FileSystemFileHandle
+						&& (f.path.endsWith('.xml') || f.path.endsWith('.log'))
+					)
+					{
+						const contents = await (await (f.contents as FileSystemFileHandle).getFile()).arrayBuffer();
+						const name = f.path.split('/').pop() ?? f.path;
+						const session = BuddyUtilities.parseAndRenderLog(f.path, new TextDecoder().decode(contents));
+						await BuddyUtilities.saveThreadMeta(session, this.defaultRepository);
+						await BuddyUtilities.saveAllMessages(name, session.messages, this.defaultRepository);
+					}
+					else if((f.mode >> 12) & (widgetSelf.FS_DIR ?? (0o040000 | 0o755))
+						&& f.contents instanceof FileSystemDirectoryHandle
+					)
+					{
+						dirs.push(f.contents);
+					}
+				} catch(e)
 				{
-					dirs.push(f.contents);
+					console.error(e);
 				}
 			}
 		}

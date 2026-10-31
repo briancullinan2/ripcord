@@ -33,7 +33,6 @@ export class BuddyUtilities
 		});
 	}
 
-
 	/**
 	 * Increments the IndexedDB version dynamically to create dedicated thread stores on demand.
 	 */
@@ -80,20 +79,37 @@ export class BuddyUtilities
 			};
 
 			req.onerror = () => reject(req.error);
+
+			// CRITICAL: Prevent infinite hangs if another connection/tab has the database open
+			req.onblocked = () =>
+			{
+				reject(new Error(`IndexedDB upgrade to version ${nextVersion} blocked. Close other open tabs or connections to '${dbName}'.`));
+			};
 		});
 	}
 
 
 	public static async saveAllMessages(threadId: string, messages: ChatMessage[], dbName: string): Promise<void>
 	{
-		await this.ensureThreadStore(threadId, dbName);
+		if(messages.length === 0)
+		{
+			return;
+		}
+
+		try
+		{
+			await this.ensureThreadStore(threadId, dbName);
+		}
+		catch(e)
+		{
+			console.error(e);
+		}
 
 		return await new Promise((resolve, reject) =>
 		{
 			if(!this.db) return reject(new Error('Database context unavailable'));
-			const tx = this.db.transaction(dbName, 'readwrite');
-			const store = tx.objectStore(dbName);
-			store.clear();
+			const tx = this.db.transaction(BuddyUtilities.MESSAGE_STORE, 'readwrite');
+			const store = tx.objectStore(BuddyUtilities.MESSAGE_STORE);
 
 			for(const m of messages)
 			{
@@ -106,14 +122,15 @@ export class BuddyUtilities
 	}
 
 
-	public static parseAndRenderLog(rawContent: string): ChatSession
+	public static parseAndRenderLog(threadId: string, rawContent: string): ChatSession
 	{
 		const lines = rawContent.split(/\r?\n/);
 		const session: ChatSession = {
 			medium: 'IM',
 			toUser: '',
 			fromUser: '',
-			messages: []
+			messages: [],
+			path: threadId
 		};
 
 		// Regex matchers matching your python logic
@@ -164,7 +181,9 @@ export class BuddyUtilities
 					displaySender: this._safeDecode(displayVal),
 					text: this._safeDecode(textVal),
 					timestamp: timestampStr,
-					medium: session.medium
+					medium: session.medium,
+					path: threadId + timestampStr,
+					parent: threadId
 				});
 			}
 		}
@@ -193,6 +212,7 @@ export class BuddyUtilities
 			return val;
 		}
 	}
+
 
 	public static async saveThreadMeta(meta: ChatSession, dbName: string): Promise<void>
 	{

@@ -424,6 +424,8 @@ export function transpileTypescriptWidget(rawCode: string, baseRoute: string): a
 
 	const transpiled = transform(rawCode, {
 		presets: ['env'],
+		// targets: "chrome",
+		targets: { esmodules: true },
 		sourceMaps: 'inline',
 		plugins: [
 			['transform-typescript', { isTSX: false }],

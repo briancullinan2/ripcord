@@ -75,7 +75,7 @@ export class PostsWidget extends widgetSelf.WithChangingWidget<PostsWidget, Budd
 				const content = event.target?.result as string;
 				if(content)
 				{
-					this.currentSession = BuddyUtilities.parseAndRenderLog(content);
+					this.currentSession = BuddyUtilities.parseAndRenderLog(file.name, content);
 					this.filterAndRender();
 				}
 			};

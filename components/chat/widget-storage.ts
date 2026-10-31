@@ -289,7 +289,6 @@ export class ChatStorageEngine
 			const tx = this.db.transaction(storeName, 'readwrite');
 			const store = tx.objectStore(storeName);
 
-			store.clear();
 			for(const m of messages)
 			{
 				store.put(m);

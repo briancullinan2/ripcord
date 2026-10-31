@@ -59,10 +59,6 @@ export class FileListWidget extends filelistSelf.SingletonSidebarWidget implemen
 			this._source = source;
 		}
 		this.treeContainerId = `tree-${Date.now()}`;
-		requestAnimationFrame(() =>
-		{
-			this.renderAndLoad();
-		});
 	}
 
 	public get defaultRepository()
